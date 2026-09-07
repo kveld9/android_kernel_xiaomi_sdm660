@@ -942,6 +942,10 @@ void susfs_try_umount(uid_t target_uid) {
 	}
 }
 
+void susfs_try_umount_all(uid_t uid) {
+	susfs_try_umount(uid);
+}
+
 #ifdef CONFIG_KSU_SUSFS_AUTO_ADD_TRY_UMOUNT_FOR_BIND_MOUNT
 void susfs_auto_add_try_umount_for_bind_mount(struct path *path) {
 	struct st_susfs_try_umount_list *new_list = NULL;
