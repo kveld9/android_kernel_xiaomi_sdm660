@@ -1760,7 +1760,6 @@ static int lookup_fast(struct nameidata *nd,
 			}
 		}
 #endif
-		bool negative;
 		dentry = __d_lookup_rcu(parent, &nd->last, &seq);
 
 #ifdef CONFIG_KSU_SUSFS_SUS_PATH
@@ -2640,7 +2639,7 @@ static int path_lookupat(struct nameidata *nd, unsigned flags, struct path *path
 	return err;
 }
 
-static int filename_lookup(int dfd, struct filename *name, unsigned flags,
+int filename_lookup(int dfd, struct filename *name, unsigned flags,
 			   struct path *path, struct path *root)
 {
 	int retval;
