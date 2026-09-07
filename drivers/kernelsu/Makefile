@@ -21,8 +21,8 @@ KSU_VERSION_TAG := $(shell cd $(srctree)/$(src); /usr/bin/env PATH="$$PATH":/usr
 $(info -- KernelSU-Next tag: $(KSU_VERSION_TAG))
 ccflags-y += -DKSU_VERSION_TAG=\"$(KSU_VERSION_TAG)\"
 else
-$(warning "KSU_VERSION_TAG not defined! It is better to make KernelSU-Next a git submodule!")
-ccflags-y += -DKSU_VERSION_TAG=\"v0.0.0\"
+KSU_VERSION_TAG := v1.1.1
+ccflags-y += -DKSU_VERSION_TAG=\"$(KSU_VERSION_TAG)\"
 endif
 
 # .git is a text file while the module is imported by 'git submodule add'.
@@ -34,8 +34,8 @@ $(eval KSU_VERSION=$(shell expr 10000 + $(KSU_GIT_VERSION) + 199))
 $(info -- KernelSU-Next version: $(KSU_VERSION))
 ccflags-y += -DKSU_VERSION=$(KSU_VERSION)
 else # If there is no .git file, the default version will be passed.
-$(warning "KSU_GIT_VERSION not defined! It is better to make KernelSU-Next a git submodule!")
-ccflags-y += -DKSU_VERSION=11998
+KSU_VERSION := 12851
+ccflags-y += -DKSU_VERSION=$(KSU_VERSION)
 endif
 
 ifeq ($(shell grep -q " current_sid(void)" $(srctree)/security/selinux/include/objsec.h; echo $$?),0)
