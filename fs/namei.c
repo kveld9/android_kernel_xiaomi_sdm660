@@ -1743,6 +1743,7 @@ static int lookup_fast(struct nameidata *nd,
 	 */
 	if (nd->flags & LOOKUP_RCU) {
 		unsigned seq;
+		bool negative;
 #ifdef CONFIG_KSU_SUSFS_SUS_PATH
 		unsigned backup_next_seq;
 
