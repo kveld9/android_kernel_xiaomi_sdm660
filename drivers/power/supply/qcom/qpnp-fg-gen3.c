@@ -542,6 +542,7 @@ static int fg_get_charge_counter_shadow(struct fg_dev *fg, int *val)
 	struct fg_gen3_chip *chip = container_of(fg, struct fg_gen3_chip, fg);
 	int rc;
 	unsigned int batt_soc;
+	int64_t full_cap;
 
 	rc = fg_get_sram_prop(fg, FG_SRAM_BATT_SOC, &batt_soc);
 	if (rc < 0) {
@@ -549,7 +550,17 @@ static int fg_get_charge_counter_shadow(struct fg_dev *fg, int *val)
 		return rc;
 	}
 
-	*val = div_u64((uint64_t)batt_soc * chip->cl.learned_cc_uah,
+	if (chip->cl.learned_cc_uah > 0)
+		full_cap = chip->cl.learned_cc_uah;
+	else if (chip->cl.nom_cap_uah > 0)
+		full_cap = chip->cl.nom_cap_uah;
+	else if (fg->battery_full_design > 0)
+		full_cap = (fg->battery_full_design < 10000) ?
+				(int64_t)fg->battery_full_design * 1000 : fg->battery_full_design;
+	else
+		full_cap = 4000000LL;
+
+	*val = div_u64((uint64_t)batt_soc * full_cap,
 							BATT_SOC_32BIT);
 	return 0;
 }
@@ -559,6 +570,7 @@ static int fg_get_charge_counter(struct fg_dev *fg, int *val)
 	struct fg_gen3_chip *chip = container_of(fg, struct fg_gen3_chip, fg);
 	int rc;
 	int cc_soc;
+	int64_t full_cap;
 
 	rc = fg_get_sram_prop(fg, FG_SRAM_CC_SOC_SW, &cc_soc);
 	if (rc < 0) {
@@ -566,7 +578,17 @@ static int fg_get_charge_counter(struct fg_dev *fg, int *val)
 		return rc;
 	}
 
-	*val = div_s64((int64_t)cc_soc * chip->cl.learned_cc_uah, CC_SOC_30BIT);
+	if (chip->cl.learned_cc_uah > 0)
+		full_cap = chip->cl.learned_cc_uah;
+	else if (chip->cl.nom_cap_uah > 0)
+		full_cap = chip->cl.nom_cap_uah;
+	else if (fg->battery_full_design > 0)
+		full_cap = (fg->battery_full_design < 10000) ?
+				(int64_t)fg->battery_full_design * 1000 : fg->battery_full_design;
+	else
+		full_cap = 4000000LL;
+
+	*val = div_s64((int64_t)cc_soc * full_cap, CC_SOC_30BIT);
 	return 0;
 }
 
@@ -3817,7 +3839,13 @@ static int fg_psy_get_property(struct power_supply *psy,
 		rc = fg_get_sram_prop(fg, FG_SRAM_OCV, &pval->intval);
 		break;
 	case POWER_SUPPLY_PROP_CHARGE_FULL_DESIGN:
-		pval->intval = chip->cl.nom_cap_uah;
+		if (chip->cl.nom_cap_uah > 0)
+			pval->intval = chip->cl.nom_cap_uah;
+		else if (fg->battery_full_design > 0)
+			pval->intval = (fg->battery_full_design < 10000) ?
+					fg->battery_full_design * 1000 : fg->battery_full_design;
+		else
+			pval->intval = 4000 * 1000;
 		break;
 	case POWER_SUPPLY_PROP_RESISTANCE_ID:
 		pval->intval = fg->batt_id_ohms;
@@ -3841,7 +3869,15 @@ static int fg_psy_get_property(struct power_supply *psy,
 		pval->intval = chip->cl.init_cc_uah;
 		break;
 	case POWER_SUPPLY_PROP_CHARGE_FULL:
-		pval->intval = chip->cl.learned_cc_uah;
+		if (chip->cl.learned_cc_uah > 0)
+			pval->intval = chip->cl.learned_cc_uah;
+		else if (chip->cl.nom_cap_uah > 0)
+			pval->intval = chip->cl.nom_cap_uah;
+		else if (fg->battery_full_design > 0)
+			pval->intval = (fg->battery_full_design < 10000) ?
+					fg->battery_full_design * 1000 : fg->battery_full_design;
+		else
+			pval->intval = 4000 * 1000;
 		break;
 	case POWER_SUPPLY_PROP_CHARGE_COUNTER:
 		rc = fg_get_charge_counter(fg, &pval->intval);

@@ -2210,10 +2210,13 @@ int smblib_get_prop_battery_full_design(struct smb_charger *chg,
 	if (!chg->bms_psy)
 		return -EINVAL;
 	chip = power_supply_get_drvdata(chg->bms_psy);
-	if (chip->battery_full_design)
+	if (chip->battery_full_design) {
 		val->intval = chip->battery_full_design;
-	else
-		val->intval = 4000;
+		if (val->intval < 10000)
+			val->intval *= 1000;
+	} else {
+		val->intval = 4000 * 1000;
+	}
 	return 0;
 }
 #endif
