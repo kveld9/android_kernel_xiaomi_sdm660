@@ -61,13 +61,7 @@ KSU_SRC := $(realpath $(dir $(abspath $(lastword $(MAKEFILE_LIST)))))
 
 LOCAL_GIT_EXISTS := $(shell test -e $(KSU_SRC)/../.git && echo 1 || echo 0)
 
-ifeq ($(LOCAL_GIT_EXISTS),0)
-$(info -- Can't find $(REPO_NAME) git submodule!)
-$(info -- If you are using bazel to build this kernel,)
-$(info -- Please go to Kbuild and change KSU_SRC to the absolute path of the KSU kernel folder.)
-$(error You should use $(REPO_NAME) as a git submodule instead of copying code directly)
-endif
-
+ifeq ($(LOCAL_GIT_EXISTS),1)
 ifdef KBUILD_EXTMOD
 include $(KSU_SRC)/tools/ddk_compatible.mk
 endif
@@ -76,12 +70,23 @@ $(shell cd $(KSU_SRC); [ -f ../.git/shallow ] && $(GIT_BIN) fetch --unshallow)
 KSU_LOCAL_VERSION := $(shell cd $(KSU_SRC); $(GIT_BIN) rev-list --count HEAD)
 KSU_VERSION := $(shell expr 30000 + $(KSU_LOCAL_VERSION) + 700)
 
-KSU_TAG_NAME    := $(shell cd $(KSU_SRC); $(GIT_BIN) describe --abbrev=0 --tags 2>/dev/null || echo "v4.1.0")
+KSU_TAG_NAME    := $(shell cd $(KSU_SRC); $(GIT_BIN) describe --abbrev=0 --tags 2>/dev/null || echo "v4.2.0")
 KSU_COMMIT_SHA  := $(shell cd $(KSU_SRC); $(GIT_BIN) rev-parse --short=8 HEAD 2>/dev/null || echo "unknown")
 ifneq ($(shell cd $(KSU_SRC); $(GIT_BIN) diff-index --quiet HEAD; echo $$?),0)
 KSU_COMMIT_SHA  := $(KSU_COMMIT_SHA)-dirty
 endif
 KSU_BRANCH_NAME := $(shell cd $(KSU_SRC); $(GIT_BIN) branch --show-current 2>/dev/null || echo "unknown")
+else
+# In-tree self-contained driver build
+ifdef KBUILD_EXTMOD
+include $(KSU_SRC)/tools/ddk_compatible.mk
+endif
+KSU_LOCAL_VERSION := 4415
+KSU_VERSION := 35115
+KSU_TAG_NAME := v4.2.0
+KSU_COMMIT_SHA := in-tree
+KSU_BRANCH_NAME := lineage-21-resukisu
+endif
 
 # call subst to process placeholders
 KSU_VERSION_FULL := $(subst ",,$(CONFIG_KSU_FULL_NAME_FORMAT))
