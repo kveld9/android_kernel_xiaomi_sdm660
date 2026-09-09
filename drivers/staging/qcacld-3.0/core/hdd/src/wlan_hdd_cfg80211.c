@@ -1863,7 +1863,7 @@ static int wlan_hdd_set_acs_ch_range(
 		sap_cfg->acs_cfg.hw_mode = eCSR_DOT11_MODE_11ac;
 
 	/* Parse ACS Chan list from hostapd */
-	if (!sap_cfg->acs_cfg.ch_list)
+	if (!sap_cfg->acs_cfg.ch_list || !sap_cfg->acs_cfg.ch_list_count)
 		return -EINVAL;
 
 	sap_cfg->acs_cfg.start_ch = sap_cfg->acs_cfg.ch_list[0];
@@ -2993,6 +2993,12 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 					sap_config->acs_cfg.pcl_ch_count,
 					sap_config->acs_cfg.ch_list,
 					&sap_config->acs_cfg.ch_list_count);
+
+		if (!sap_config->acs_cfg.ch_list_count) {
+			hdd_err("trimmed acs channel list count is 0");
+			ret = -EINVAL;
+			goto out;
+		}
 
 		/* if it is only one channel, send ACS event to upper layer */
 		if (sap_config->acs_cfg.ch_list_count == 1) {
